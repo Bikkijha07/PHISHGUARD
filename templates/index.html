@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhishGuard — Phishing URL Detection System</title>
+  <meta name="description" content="Analyze URLs for phishing indicators using advanced pattern detection and security rules. Protect yourself from dangerous links." />
+  <meta name="keywords" content="phishing detection, URL analyzer, cybersecurity, link scanner, phishguard" />
+  <meta property="og:title" content="PhishGuard — Phishing URL Detection System" />
+  <meta property="og:description" content="Analyze URLs for phishing indicators instantly." />
+  <link rel="icon" href="{{ url_for('static', filename='img/logo.png') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="bg-grid"></div>
+<div class="particles" id="particles"></div>
+
+<div id="app">
+
+  <!-- ── Header ─────────────────────────────────── -->
+  <header>
+    <div class="logo-area">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PhishGuard Logo" class="logo-img" />
+      <div class="logo-text">
+        <span class="logo-title">PHISHGUARD</span>
+        <span class="logo-subtitle">URL Detection System</span>
+      </div>
+    </div>
+    <div class="header-badge">
+      <span class="dot"></span>
+      System Active
+    </div>
+  </header>
+
+  <!-- ── Stats Bar ──────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat-card" style="--accent-color: #00c8ff">
+      <div class="stat-label">Total Scans</div>
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-icon">🔍</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #ff1744">
+      <div class="stat-label">Phishing Found</div>
+      <div class="stat-value" id="statPhishing">0</div>
+      <div class="stat-icon">🚨</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #ffab00">
+      <div class="stat-label">Suspicious</div>
+      <div class="stat-value" id="statSuspicious">0</div>
+      <div class="stat-icon">⚠️</div>
+    </div>
+    <div class="stat-card" style="--accent-color: #00e676">
+      <div class="stat-label">Safe URLs</div>
+      <div class="stat-value" id="statSafe">0</div>
+      <div class="stat-icon">✅</div>
+    </div>
+  </div>
+
+  <!-- ── Scanner Hero ───────────────────────────── -->
+  <section class="scanner-section">
+    <div class="section-heading">
+      <h1 class="section-title">🔐 Phishing URL Detection System</h1>
+      <p class="section-desc">
+        Analyze URLs using 20+ heuristic checks, suspicious pattern detection, and security rules<br/>
+        to identify potentially dangerous phishing links in real-time.
+      </p>
+    </div>
+
+    <!-- Input Row -->
+    <div class="input-group">
+      <div class="url-input-wrapper">
+        <input
+          type="url"
+          id="urlInput"
+          placeholder="Enter a URL to scan — e.g. https://example.com/login"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <span class="input-icon">🔗</span>
+      </div>
+      <button id="scanBtn" onclick="scanUrl()">
+        <span id="btnIcon">🛡️</span>
+        <span id="btnText">Scan URL</span>
+        <div class="btn-spinner" id="btnSpinner"></div>
+      </button>
+    </div>
+
+    <!-- Quick Examples -->
+    <div class="quick-examples">
+      <span class="quick-label">Try:</span>
+      <button class="quick-btn" onclick="setExample('https://www.google.com')">google.com ✅</button>
+      <button class="quick-btn" onclick="setExample('https://github.com/login')">github.com ✅</button>
+      <button class="quick-btn phishing" onclick="setExample('http://paypal-secure-login.tk/verify/account?user=admin&session=x93&confirm=true&redirect=http://evil.com')">Phishing Example 🚨</button>
+      <button class="quick-btn phishing" onclick="setExample('http://192.168.1.1/amazon-account-suspend/verify@user')">IP Phishing 🚨</button>
+    </div>
+
+    <!-- Scan Progress -->
+    <div class="scan-progress" id="scanProgress">
+      <div class="scan-bar-wrapper">
+        <div class="scan-bar"></div>
+      </div>
+      <div class="scan-text" id="scanStatus">🔍 Initializing scanner...</div>
+    </div>
+  </section>
+
+  <!-- ── Results Section ────────────────────────── -->
+  <section id="resultsSection">
+
+    <!-- Scanned URL -->
+    <div class="scanned-url">
+      <span class="scanned-url-label">📎 Scanned</span>
+      <span class="scanned-url-value" id="scannedUrl"></span>
+    </div>
+
+    <!-- Verdict Card -->
+    <div class="verdict-card" id="verdictCard">
+      <div>
+        <div class="verdict-icon" id="verdictIcon">🔍</div>
+        <div class="verdict-label" id="verdictLabel">Analyzing...</div>
+        <div class="verdict-message" id="verdictMessage"></div>
+        <div class="verdict-recommendation" id="verdictRecommendation"></div>
+      </div>
+      <div class="gauge-wrapper">
+        <svg class="gauge-svg" width="160" height="160" viewBox="0 0 100 100">
+          <circle class="gauge-track" cx="50" cy="50" r="40"
+            stroke-dasharray="251" stroke-dashoffset="0"
+            transform="rotate(-90 50 50)" />
+          <circle class="gauge-fill" id="gaugeFill" cx="50" cy="50" r="40" />
+          <text class="gauge-score-text" id="gaugeScore" x="50" y="47">0</text>
+          <text class="gauge-label-text" x="50" y="60">RISK SCORE</text>
+        </svg>
+        <div class="gauge-score">Out of 100</div>
+      </div>
+    </div>
+
+    <!-- Features & Red Flags Grid -->
+    <div class="results-grid">
+
+      <!-- Feature Breakdown -->
+      <div class="card">
+        <div class="card-title"><span>📋</span> Feature Analysis</div>
+        <div id="featureList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Red Flags -->
+      <div class="card">
+        <div class="card-title"><span>🚩</span> Risk Factors Detected</div>
+        <div id="redFlagsList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Scan History ───────────────────────────── -->
+  <div class="history-section">
+    <div class="card-title" style="margin-bottom:20px"><span>📜</span> Recent Scan History</div>
+    <div id="historyList">
+      <div class="history-empty">🔍 No scans yet. Paste a URL above to get started.</div>
+    </div>
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────── -->
+  <footer>
+    <p>
+      <span>PhishGuard</span> — Phishing URL Detection System &nbsp;|&nbsp;
+      Minor Project &nbsp;|&nbsp;
+      Built with <span>Python</span> · <span>Flask</span> · <span>URL Analysis</span>
+    </p>
+    <p style="margin-top:6px; font-size:0.72rem">
+      ⚠️ For educational purposes only. Always verify with a trusted security tool in production.
+    </p>
+  </footer>
+
+</div><!-- /#app -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
